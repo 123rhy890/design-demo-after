@@ -1,0 +1,24 @@
+# 服务端口+项目路径配置
+server:
+  port: 8081
+  servlet:
+    context-path: /api
+
+# 核心数据库配置 - 修复所有报错
+spring:
+  # 数据库连接配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/after_school_care?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+    username: root
+    password: 123456
+  # JPA配置 - 解决dialect报错 + 自动建表
+  jpa:
+    hibernate:
+      ddl-auto: update # 自动创建/更新表结构，不用手动建表了！
+    show-sql: true # 控制台打印SQL语句，方便调试
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect # 指定MySQL8方言，解决dialect报错
+        format_sql: true # SQL语句格式化，美观
+    open-in-view: false
