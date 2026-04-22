@@ -1,57 +1,71 @@
 package com.example.caresystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-/**
- * 儿童信息实体类 - 对应数据库sys_child表
- * 所有注解+关联类+导入包全部补全，无任何报错
- */
 @Data
 @Entity
-@Table(name = "sys_child")
+@Table(name = "t_child")
 @DynamicInsert
 @DynamicUpdate
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Child {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "child_id")
+    private Integer childId;
 
-    /** 儿童姓名 */
-    private String name;
+    @Column(name = "child_name", nullable = false, length = 50)
+    private String childName;
 
-    /** 性别：男/女 */
-    private String gender;
+    @Column(name = "gender", nullable = false)
+    private Integer gender;
 
-    /** 出生日期 */
-    private Date birthday;
+    @Column(name = "birth_date", nullable = false)
+    private LocalDate birthDate;
 
-    /** 过敏信息/禁忌 */
-    private String allergyInfo;
-
-    /** 紧急联系人电话 */
-    private String emergencyContact;
-
-    /** 关联家长用户 多对一：多个孩子对应一个家长 */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id")
     private User parent;
 
-    /** 关联班级信息 多对一：多个孩子对应一个班级 */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "class_id")
     private ClassInfo classInfo;
 
-    /** 入学时间 */
-    private Date createTime;
+    @Column(name = "allergy_history", columnDefinition = "TEXT")
+    private String allergyHistory;
 
-    /** 自动填充创建时间 */
+    @Column(name = "emergency_contact", nullable = false, length = 50)
+    private String emergencyContact;
+
+    @Column(name = "emergency_phone", nullable = false, length = 20)
+    private String emergencyPhone;
+
+    @Column(name = "remark", length = 200)
+    private String remark;
+
+    @Column(name = "create_time", nullable = false)
+    private LocalDateTime createTime;
+
+    @Column(name = "update_time", nullable = false)
+    private LocalDateTime updateTime;
+
     @PrePersist
     public void prePersist() {
-        this.createTime = new Date();
+        LocalDateTime now = LocalDateTime.now();
+        this.createTime = now;
+        this.updateTime = now;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updateTime = LocalDateTime.now();
     }
 }

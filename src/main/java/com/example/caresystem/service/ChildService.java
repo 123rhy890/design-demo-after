@@ -3,20 +3,17 @@ package com.example.caresystem.service;
 import com.example.caresystem.entity.Child;
 import com.example.caresystem.entity.ClassInfo;
 import com.example.caresystem.entity.User;
+import com.example.caresystem.enums.UserEnums;
 import com.example.caresystem.repository.ChildRepository;
 import com.example.caresystem.repository.ClassInfoRepository;
 import com.example.caresystem.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.Optional;
 
-/**
- * 儿童信息核心业务层
- * 所有业务逻辑、参数校验、数据关联都在这里处理
- */
 @Service
 public class ChildService {
 
@@ -29,96 +26,118 @@ public class ChildService {
     @Autowired
     private ClassInfoRepository classInfoRepository;
 
-    /**
-     * 1. 新增儿童信息 (核心功能：绑定家长+绑定班级)
-     * @param child 儿童信息
-     * @param parentId 家长ID
-     * @param classId 班级ID
-     */
-    public Child addChild(Child child, Long parentId, Long classId) {
-        // 1. 参数非空校验
-        if (!StringUtils.hasText(child.getName())) {
+    @Transactional
+    public Child addChild(Child child, Integer parentId, Integer classId) {
+        if (!StringUtils.hasText(child.getChildName())) {
             throw new RuntimeException("儿童姓名不能为空");
         }
-        if (!StringUtils.hasText(child.getGender())) {
+        if (child.getGender() == null) {
             throw new RuntimeException("儿童性别不能为空");
         }
-        if (child.getBirthday() == null) {
+        if (child.getBirthDate() == null) {
             throw new RuntimeException("出生日期不能为空");
         }
         if (!StringUtils.hasText(child.getEmergencyContact())) {
             throw new RuntimeException("紧急联系人不能为空");
         }
+        if (!StringUtils.hasText(child.getEmergencyPhone())) {
+            throw new RuntimeException("紧急联系电话不能为空");
+        }
 
-        // 2. 绑定家长（关联用户表，只能绑定家长角色的用户）
         User parent = userRepository.findById(parentId)
-                .orElseThrow(() -> new RuntimeException("家长不存在，请先注册家长账号"));
-        // 校验该用户是否为家长角色
-        if (!parent.getRole().toString().equals("PARENT")) {
+                .orElseThrow(() -> new RuntimeException("家长不存在"));
+        if (!UserEnums.Role.PARENT.getCode().equals(parent.getRoleType())) {
             throw new RuntimeException("该用户不是家长账号，无法绑定儿童");
         }
         child.setParent(parent);
 
-        // 3. 绑定班级
-        ClassInfo classInfo = classInfoRepository.findById(classId)
-                .orElseThrow(() -> new RuntimeException("班级不存在"));
-        child.setClassInfo(classInfo);
+        if (classId != null) {
+            ClassInfo classInfo = classInfoRepository.findById(classId)
+                    .orElseThrow(() -> new RuntimeException("班级不存在"));
+            child.setClassInfo(classInfo);
+        }
 
-        // 4. 保存儿童信息到数据库
         return childRepository.save(child);
     }
 
-    /**
-     * 2. 根据家长ID查询该家长的所有孩子列表 (家长专属查询)
-     */
-    public List<Child> getChildListByParentId(Long parentId) {
-        User parent = userRepository.findById(parentId)
-                .orElseThrow(() -> new RuntimeException("家长不存在"));
-        return childRepository.findByParent(parent);
+    public List<Child> getChildListByParentId(Integer parentId) {
+        return childRepository.findByParentId(parentId);
     }
 
-    /**
-     * 3. 根据儿童ID查询单个儿童详情
-     */
-    public Child getChildById(Long id) {
+    public Child getChildById(Integer id) {
         return childRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("儿童信息不存在"));
     }
 
-    /**
-     * 4. 修改儿童信息
-     */
-    public Child updateChild(Long id, Child child, Long classId) {
-        // 1. 查询原儿童信息
+    @Transactional
+    public Child updateChild(Integer id, Child child, Integer classId) {
         Child oldChild = getChildById(id);
-        // 2. 赋值修改后的信息
-        oldChild.setName(child.getName());
-        oldChild.setGender(child.getGender());
-        oldChild.setBirthday(child.getBirthday());
-        oldChild.setAllergyInfo(child.getAllergyInfo());
-        oldChild.setEmergencyContact(child.getEmergencyContact());
-        // 3. 修改班级
+
+        if (StringUtils.hasText(child.getChildName())) {
+            oldChild.setChildName(child.getChildName());
+        }
+        if (child.getGender() != null) {
+            oldChild.setGender(child.getGender());
+        }
+        if (child.getBirthDate() != null) {
+            oldChild.setBirthDate(child.getBirthDate());
+        }
+        if (child.getAllergyHistory() != null) {
+            oldChild.setAllergyHistory(child.getAllergyHistory());
+        }
+        if (StringUtils.hasText(child.getEmergencyContact())) {
+            oldChild.setEmergencyContact(child.getEmergencyContact());
+        }
+        if (StringUtils.hasText(child.getEmergencyPhone())) {
+            oldChild.setEmergencyPhone(child.getEmergencyPhone());
+        }
+        if (StringUtils.hasText(child.getRemark())) {
+            oldChild.setRemark(child.getRemark());
+        }
+
         if (classId != null) {
             ClassInfo classInfo = classInfoRepository.findById(classId)
                     .orElseThrow(() -> new RuntimeException("班级不存在"));
             oldChild.setClassInfo(classInfo);
         }
-        // 4. 保存修改
+
         return childRepository.save(oldChild);
     }
 
-    /**
-     * 5. 删除儿童信息（逻辑删除，也可物理删除，按需选择）
-     */
-    public void deleteChild(Long id) {
+    @Transactional
+    public void deleteChild(Integer id) {
         Child child = getChildById(id);
         childRepository.delete(child);
     }
 
-    /**
-     * 6. 模糊查询儿童信息（按姓名）
-     */
-    public List<Child> searchChild(String name) {
-        return childRepository.findByNameLike("%" + name + "%");
+    public List<Child> searchChild(String keyword) {
+        return childRepository.searchByKeyword(keyword);
+    }
+
+    public List<Child> getChildrenByClassId(Integer classId) {
+        return childRepository.findByClassId(classId);
+    }
+
+    public List<Child> getAllChildren() {
+        return childRepository.findAll();
+    }
+
+    @Transactional
+    public Child updateClassInfo(Integer childId, Integer classId) {
+        Child child = getChildById(childId);
+        if (classId == null || classId <= 0) {
+            child.setClassInfo(null);
+        } else {
+            ClassInfo classInfo = classInfoRepository.findById(classId)
+                    .orElseThrow(() -> new RuntimeException("班级不存在"));
+            child.setClassInfo(classInfo);
+        }
+        return childRepository.save(child);
+    }
+
+    public Long countByClassId(Integer classId) {
+        if (classId == null || classId <= 0) return 0L;
+        ClassInfo ci = classInfoRepository.findById(classId).orElse(null);
+        return ci != null ? childRepository.countByClassInfo(ci) : 0L;
     }
 }

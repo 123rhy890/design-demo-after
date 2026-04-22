@@ -1,0 +1,107 @@
+<html>
+<head>
+<title>ChildController.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #0033b3;}
+.s1 { color: #080808;}
+.s2 { color: #8c8c8c; font-style: italic;}
+.s3 { color: #067d17;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+ChildController.java</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">com.example.caresystem.controller;</span>
+
+<span class="s0">import </span><span class="s1">com.example.caresystem.entity.Child;</span>
+<span class="s0">import </span><span class="s1">com.example.caresystem.service.ChildService;</span>
+<span class="s0">import </span><span class="s1">com.example.caresystem.utils.Result;</span>
+<span class="s0">import </span><span class="s1">org.springframework.beans.factory.annotation.Autowired;</span>
+<span class="s0">import </span><span class="s1">org.springframework.web.bind.annotation.*;</span>
+
+<span class="s0">import </span><span class="s1">java.util.List;</span>
+
+<span class="s2">/**</span>
+ <span class="s2">* 儿童信息接口层 - 对外提供RESTful接口</span>
+ <span class="s2">* 接口前缀：http://localhost:8080/api/child</span>
+ <span class="s2">* 所有接口返回统一Result格式，前端解析无压力</span>
+ <span class="s2">*/</span>
+<span class="s1">@RestController</span>
+<span class="s1">@RequestMapping(</span><span class="s3">&quot;/child&quot;</span><span class="s1">)</span>
+<span class="s0">public class </span><span class="s1">ChildController {</span>
+
+    <span class="s1">@Autowired</span>
+    <span class="s0">private </span><span class="s1">ChildService childService;</span>
+
+    <span class="s2">/**</span>
+     <span class="s2">* 新增儿童信息</span>
+     <span class="s2">* POST 请求：http://localhost:8080/api/child/add</span>
+     <span class="s2">* 请求参数：child实体+parentId(家长ID)+classId(班级ID)</span>
+     <span class="s2">*/</span>
+    <span class="s1">@PostMapping(</span><span class="s3">&quot;/add&quot;</span><span class="s1">)</span>
+    <span class="s0">public </span><span class="s1">Result&lt;Child&gt; addChild(@RequestBody Child child,</span>
+                                  <span class="s1">@RequestParam Long parentId,</span>
+                                  <span class="s1">@RequestParam Long classId) {</span>
+        <span class="s1">Child savedChild = childService.addChild(child, parentId, classId);</span>
+        <span class="s0">return </span><span class="s1">Result.success(savedChild);</span>
+    <span class="s1">}</span>
+
+    <span class="s2">/**</span>
+     <span class="s2">* 根据家长ID查询孩子列表</span>
+     <span class="s2">* GET 请求：http://localhost:8080/api/child/parent/{parentId}</span>
+     <span class="s2">*/</span>
+    <span class="s1">@GetMapping(</span><span class="s3">&quot;/parent/{parentId}&quot;</span><span class="s1">)</span>
+    <span class="s0">public </span><span class="s1">Result&lt;List&lt;Child&gt;&gt; getChildListByParent(@PathVariable Long parentId) {</span>
+        <span class="s1">List&lt;Child&gt; childList = childService.getChildListByParentId(parentId);</span>
+        <span class="s0">return </span><span class="s1">Result.success(childList);</span>
+    <span class="s1">}</span>
+
+    <span class="s2">/**</span>
+     <span class="s2">* 根据儿童ID查询详情</span>
+     <span class="s2">* GET 请求：http://localhost:8080/api/child/{id}</span>
+     <span class="s2">*/</span>
+    <span class="s1">@GetMapping(</span><span class="s3">&quot;/{id}&quot;</span><span class="s1">)</span>
+    <span class="s0">public </span><span class="s1">Result&lt;Child&gt; getChildById(@PathVariable Long id) {</span>
+        <span class="s1">Child child = childService.getChildById(id);</span>
+        <span class="s0">return </span><span class="s1">Result.success(child);</span>
+    <span class="s1">}</span>
+
+    <span class="s2">/**123*/</span>
+    <span class="s2">/**</span>
+     <span class="s2">* 修改儿童信息111</span>
+     <span class="s2">* PUT 请求：http://localhost:8080/api/child/update/{id}</span>
+     <span class="s2">*/</span>
+    <span class="s1">@PutMapping(</span><span class="s3">&quot;/update/{id}&quot;</span><span class="s1">)</span>
+    <span class="s0">public </span><span class="s1">Result&lt;Child&gt; updateChild(@PathVariable Long id,</span>
+                                     <span class="s1">@RequestBody Child child,</span>
+                                     <span class="s1">@RequestParam(required = </span><span class="s0">false</span><span class="s1">) Long classId) {</span>
+        <span class="s1">Child updatedChild = childService.updateChild(id, child, classId);</span>
+        <span class="s0">return </span><span class="s1">Result.success(updatedChild);</span>
+    <span class="s1">}</span>
+
+    <span class="s2">/**</span>
+     <span class="s2">* 删除儿童信息</span>
+     <span class="s2">* DELETE 请求：http://localhost:8080/api/child/delete/{id}</span>
+     <span class="s2">*/</span>
+    <span class="s1">@DeleteMapping(</span><span class="s3">&quot;/delete/{id}&quot;</span><span class="s1">)</span>
+    <span class="s0">public </span><span class="s1">Result&lt;Void&gt; deleteChild(@PathVariable Long id) {</span>
+        <span class="s1">childService.deleteChild(id);</span>
+        <span class="s0">return </span><span class="s1">Result.success();</span>
+    <span class="s1">}</span>
+
+    <span class="s2">/**</span>
+     <span class="s2">* 模糊搜索儿童（按姓名）</span>
+     <span class="s2">* GET 请求：http://localhost:8080/api/child/search?name=小明</span>
+     <span class="s2">*/</span>
+    <span class="s1">@GetMapping(</span><span class="s3">&quot;/search&quot;</span><span class="s1">)</span>
+    <span class="s0">public </span><span class="s1">Result&lt;List&lt;Child&gt;&gt; searchChild(@RequestParam String name) {</span>
+        <span class="s1">List&lt;Child&gt; childList = childService.searchChild(name);</span>
+        <span class="s0">return </span><span class="s1">Result.success(childList);</span>
+    <span class="s1">}</span>
+<span class="s1">}</span></pre>
+</body>
+</html>
