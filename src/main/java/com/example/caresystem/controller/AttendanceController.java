@@ -7,6 +7,7 @@ import com.example.caresystem.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -118,5 +119,18 @@ public class AttendanceController {
     public Result<List<Attendance>> getTodayAttendances() {
         List<Attendance> attendances = attendanceService.getTodayAttendances();
         return Result.success(attendances);
+    }
+
+    @PostMapping("/manual/checkin")
+    public Result<Attendance> manualCheckin(@RequestParam Integer reserveId, @RequestParam String signCode) {
+        Attendance attendance = attendanceService.manualCheckin(reserveId, signCode);
+        return Result.success(attendance);
+    }
+
+    @GetMapping("/child/{childId}/checkinDates")
+    public Result<List<LocalDate>> getCheckinDatesByChildAndMonth(@PathVariable Integer childId,
+                                                                  @RequestParam String month) {
+        List<LocalDate> dates = attendanceService.getCheckinDatesByChildAndMonth(childId, month);
+        return Result.success(dates);
     }
 }

@@ -1,5 +1,7 @@
 package com.example.caresystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 @Table(name = "t_voucher")
 @DynamicInsert
 @DynamicUpdate
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Voucher {
 
     @Id
@@ -49,6 +52,7 @@ public class Voucher {
 
     /** 凭证上传时间 */
     @Column(name = "upload_time", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime uploadTime;
 
     /**
@@ -61,6 +65,7 @@ public class Voucher {
 
     /** 审核时间，可为空 */
     @Column(name = "audit_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime auditTime;
 
     /** 审核状态：0-待审核/1-通过/2-驳回 */
@@ -73,10 +78,12 @@ public class Voucher {
 
     /** 记录创建时间 */
     @Column(name = "create_time", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
     /** 记录最后修改时间 */
     @Column(name = "update_time", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
     /**

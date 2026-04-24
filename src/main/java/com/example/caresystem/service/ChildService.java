@@ -2,11 +2,10 @@ package com.example.caresystem.service;
 
 import com.example.caresystem.entity.Child;
 import com.example.caresystem.entity.ClassInfo;
+import com.example.caresystem.entity.FeeBill;
 import com.example.caresystem.entity.User;
 import com.example.caresystem.enums.UserEnums;
-import com.example.caresystem.repository.ChildRepository;
-import com.example.caresystem.repository.ClassInfoRepository;
-import com.example.caresystem.repository.UserRepository;
+import com.example.caresystem.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +24,27 @@ public class ChildService {
 
     @Autowired
     private ClassInfoRepository classInfoRepository;
+
+    @Autowired
+    private AllergyRepository allergyRepository;
+
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+
+    @Autowired
+    private CommunicationRepository communicationRepository;
+
+    @Autowired
+    private DailyStatusRepository dailyStatusRepository;
+
+    @Autowired
+    private FeeBillRepository feeBillRepository;
+
+    @Autowired
+    private ReservationRepository reservationRepository;
+
+    @Autowired
+    private VoucherRepository voucherRepository;
 
     @Transactional
     public Child addChild(Child child, Integer parentId, Integer classId) {
@@ -50,6 +70,14 @@ public class ChildService {
             throw new RuntimeException("该用户不是家长账号，无法绑定儿童");
         }
         child.setParent(parent);
+        
+        // 设置默认状态为已通过 (如果是申请流程则设为待审核)
+        if (child.getStatus() == null) {
+            child.setStatus(1); 
+        }
+        if (child.getCreateTime() == null) {
+            child.setCreateTime(java.time.LocalDateTime.now());
+        }
 
         if (classId != null) {
             ClassInfo classInfo = classInfoRepository.findById(classId)
@@ -82,6 +110,9 @@ public class ChildService {
         if (child.getBirthDate() != null) {
             oldChild.setBirthDate(child.getBirthDate());
         }
+        if (child.getIdCard() != null) {
+            oldChild.setIdCard(child.getIdCard());
+        }
         if (child.getAllergyHistory() != null) {
             oldChild.setAllergyHistory(child.getAllergyHistory());
         }
@@ -107,6 +138,30 @@ public class ChildService {
     @Transactional
     public void deleteChild(Integer id) {
         Child child = getChildById(id);
+        
+        // 1. 删除过敏记录
+        allergyRepository.deleteInBatch(allergyRepository.findByChild(child));
+        
+        // 2. 删除考勤记录 (考勤记录引用了预约，所以先删考勤)
+        attendanceRepository.deleteInBatch(attendanceRepository.findByChild(child));
+        
+        // 3. 删除沟通记录
+        communicationRepository.deleteInBatch(communicationRepository.findByChild(child));
+        
+        // 4. 删除日常状态
+        dailyStatusRepository.deleteInBatch(dailyStatusRepository.findByChild(child));
+        
+        // 5. 删除预约记录
+        reservationRepository.deleteInBatch(reservationRepository.findByChild(child));
+        
+        // 6. 删除账单及关联凭证
+        List<FeeBill> bills = feeBillRepository.findByChild(child);
+        for (FeeBill bill : bills) {
+            voucherRepository.deleteInBatch(voucherRepository.findByFeeBill(bill));
+        }
+        feeBillRepository.deleteInBatch(bills);
+        
+        // 7. 最后删除儿童信息
         childRepository.delete(child);
     }
 

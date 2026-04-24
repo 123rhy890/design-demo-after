@@ -99,11 +99,36 @@ public class DailyStatusService {
     }
 
     public List<DailyStatus> getTodayDailyStatuses() {
-        return dailyStatusRepository.findTodayDailyStatus();
+        return dailyStatusRepository.findByRecordDate(LocalDate.now());
     }
 
     public List<DailyStatus> getAbnormalRecords() {
-        return dailyStatusRepository.findAbnormalRecords();
+        return dailyStatusRepository.findAllAbnormalRecords();
+    }
+
+    public List<DailyStatus> getAbnormalRecordsByType(String type) {
+        return dailyStatusRepository.findByAbnormalType(type);
+    }
+
+    public java.util.Map<String, Long> getMonthlyAbnormalStats() {
+        LocalDate now = LocalDate.now();
+        LocalDate startDate = now.withDayOfMonth(1);
+        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+
+        java.util.Map<String, Long> stats = new java.util.HashMap<>();
+        stats.put("total", dailyStatusRepository.countMonthlyAbnormal(startDate, endDate));
+        stats.put("health", dailyStatusRepository.countMonthlyAbnormalByType("health", startDate, endDate));
+        stats.put("behavior", dailyStatusRepository.countMonthlyAbnormalByType("behavior", startDate, endDate));
+        stats.put("accident", dailyStatusRepository.countMonthlyAbnormalByType("accident", startDate, endDate));
+        stats.put("handled", dailyStatusRepository.countMonthlyHandledAbnormal(startDate, endDate));
+        return stats;
+    }
+
+    @Transactional
+    public DailyStatus markAbnormalAsHandled(Integer id) {
+        DailyStatus status = getDailyStatusById(id);
+        status.setStatus(1);
+        return dailyStatusRepository.save(status);
     }
 
     @Transactional

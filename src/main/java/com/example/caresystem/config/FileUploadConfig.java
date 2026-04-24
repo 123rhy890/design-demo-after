@@ -27,15 +27,20 @@ public class FileUploadConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 创建上传目录
-        File uploadDir = new File(uploadPath);
+        // 获取项目根目录的绝对路径
+        String rootPath = System.getProperty("user.dir");
+        String absolutePath = rootPath + File.separator + uploadPath + File.separator;
+        
+        // 确保上传目录存在
+        File uploadDir = new File(absolutePath);
         if (!uploadDir.exists()) {
             uploadDir.mkdirs();
         }
 
         // 配置静态资源映射
+        // 注意：Windows 下 file: 后面需要三个斜杠，或者使用正确的路径转换
         registry.addResourceHandler(accessPath + "/**")
-                .addResourceLocations("file:" + uploadPath + "/")
-                .setCachePeriod(3600);  // 设置缓存时间，单位为秒
+                .addResourceLocations("file:" + absolutePath)
+                .setCachePeriod(3600);
     }
 }

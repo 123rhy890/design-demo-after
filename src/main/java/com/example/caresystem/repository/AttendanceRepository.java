@@ -100,6 +100,15 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
     List<Attendance> findByCheckinTimeBetween(LocalDateTime startTime, LocalDateTime endTime);
 
     /**
+     * 根据儿童和签到时间范围查找考勤记录
+     * @param child 儿童
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 考勤记录列表
+     */
+    List<Attendance> findByChildAndCheckinTimeBetween(Child child, LocalDateTime startTime, LocalDateTime endTime);
+
+    /**
      * 统计指定班级在指定时间范围内的考勤人数
      * @param classId 班级ID
      * @param start 开始时间
@@ -211,10 +220,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
                                               @Param("endDate") LocalDate endDate);
 
     /**
-     * 统计班级考勤数据
-     * @param classId 班级ID
-     * @param date 日期
-     * @return 考勤统计数组 [正常, 迟到, 早退, 缺勤]
+     * 按月份统计已收金额（用于图表）
      */
     @Query("SELECT " +
             "SUM(CASE WHEN a.attendStatus = 1 THEN 1 ELSE 0 END), " +
@@ -225,4 +231,16 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
             "WHERE c.classInfo.classId = :classId AND DATE(a.checkinTime) = :date")
     List<Object[]> countAttendanceByClassAndDate(@Param("classId") Integer classId,
                                                  @Param("date") LocalDate date);
+
+    /**
+     * 获取指定儿童在指定月份的所有考勤日期
+     * @param childId 儿童ID
+     * @param startOfMonth 该月第一天
+     * @param endOfMonth 该月最后一天
+     * @return 考勤日期列表
+     */
+    @Query("SELECT DISTINCT DATE(a.checkinTime) FROM Attendance a WHERE a.child.childId = :childId AND a.checkinTime BETWEEN :startOfMonth AND :endOfMonth ORDER BY DATE(a.checkinTime)")
+    List<java.sql.Date> findCheckinDatesByChildAndMonth(@Param("childId") Integer childId,
+                                                        @Param("startOfMonth") LocalDateTime startOfMonth,
+                                                        @Param("endOfMonth") LocalDateTime endOfMonth);
 }

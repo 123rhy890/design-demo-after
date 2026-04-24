@@ -20,11 +20,11 @@ public class Result<T> {
         return new Result<>(200, "操作成功", null);
     }
 
-    public static Result<Void> error(String msg) {
+    public static <T> Result<T> error(String msg) {
         return new Result<>(500, msg, null);
     }
 
-    public static Result<Void> error(Integer code, String msg) {
+    public static <T> Result<T> error(Integer code, String msg) {
         return new Result<>(code, msg, null);
     }
 }

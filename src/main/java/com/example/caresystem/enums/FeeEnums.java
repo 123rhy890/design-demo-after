@@ -53,7 +53,8 @@ public class FeeEnums {
         UNPAID(0, "未缴费", "账单尚未支付"),
         PAID(1, "已缴费", "账单已成功支付"),
         OVERDUE(2, "欠费", "账单已逾期未支付"),
-        PARTIAL(3, "部分支付", "已支付部分金额");
+        PARTIAL(3, "部分支付", "已支付部分金额"),
+        AUDITING(4, "审核中", "凭证已上传，等待管理员审核");
 
         private final Integer code;
         private final String name;

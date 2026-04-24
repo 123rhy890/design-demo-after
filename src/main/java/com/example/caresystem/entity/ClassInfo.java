@@ -6,6 +6,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -52,6 +53,14 @@ public class ClassInfo {
     /** 班级信息最后修改时间 */
     @Column(name = "update_time", nullable = false)
     private LocalDateTime updateTime;
+
+    /** 每日签到码（8位随机数） */
+    @Column(name = "daily_sign_code", length = 8)
+    private String dailySignCode;
+
+    /** 签到码更新日期 */
+    @Column(name = "code_update_date")
+    private LocalDate codeUpdateDate;
 
     /**
      * 实体持久化前的回调方法

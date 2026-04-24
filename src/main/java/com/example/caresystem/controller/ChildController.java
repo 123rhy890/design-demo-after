@@ -73,4 +73,24 @@ public class ChildController {
         Child updatedChild = childService.updateClassInfo(childId, classId);
         return Result.success(updatedChild);
     }
+
+    @PutMapping("/audit/{id}")
+    public Result<Child> auditChild(@PathVariable Integer id,
+                                    @RequestParam Integer status,
+                                    @RequestParam String auditorName) {
+        Child child = childService.getChildById(id);
+        child.setStatus(status);
+        child.setAuditorName(auditorName);
+        child.setAuditTime(java.time.LocalDateTime.now());
+        childService.updateChild(id, child, null);
+        return Result.success(child);
+    }
+
+    @GetMapping("/pending")
+    public Result<List<Child>> getPendingChildren() {
+        List<Child> childList = childService.getAllChildren().stream()
+                .filter(c -> c.getStatus() == 0)
+                .collect(java.util.stream.Collectors.toList());
+        return Result.success(childList);
+    }
 }

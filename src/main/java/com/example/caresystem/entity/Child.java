@@ -31,6 +31,18 @@ public class Child {
     @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
+    @Column(name = "id_card", length = 18)
+    private String idCard;
+
+    @Column(name = "status")
+    private Integer status = 1; // 默认已通过
+
+    @Column(name = "auditor_name", length = 50)
+    private String auditorName;
+
+    @Column(name = "audit_time")
+    private LocalDateTime auditTime;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id")
     private User parent;

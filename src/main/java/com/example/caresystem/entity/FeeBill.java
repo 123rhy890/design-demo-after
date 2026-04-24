@@ -1,6 +1,10 @@
 package com.example.caresystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -17,6 +21,9 @@ import java.time.LocalDateTime;
 @Table(name = "t_fee_bill")
 @DynamicInsert
 @DynamicUpdate
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class FeeBill {
 
     @Id
@@ -28,7 +35,7 @@ public class FeeBill {
      * 关联儿童信息（多对一关系）
      * 账单对应哪个儿童
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "child_id", nullable = false)
     private Child child;
 
@@ -36,7 +43,7 @@ public class FeeBill {
      * 关联家长用户（多对一关系）
      * 账单对应哪个家长
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id", nullable = false)
     private User parent;
 
@@ -48,64 +55,62 @@ public class FeeBill {
     @Column(name = "manage_days", nullable = false)
     private Integer manageDays;
 
-    /** 托管时间段：上午/下午/全天，长度20字符 */
-    @Column(name = "time_slot", nullable = false, length = 20)
+    /** 托管时段（全托/日托等） */
+    @Column(name = "time_slot", length = 50)
     private String timeSlot;
 
-    /** 时段单价，从费用规则表获取，保留2位小数 */
+    /** 费用单价 */
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
-    /**
-     * 关联优惠规则（多对一关系）
-     * 账单应用的优惠规则，可为空
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "discount_id")
-    private DiscountRule discountRule;
+    /** 优惠金额 */
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    private BigDecimal discountAmount;
 
-    /** 优惠金额，默认0，保留2位小数 */
-    @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
-    private BigDecimal discountAmount = BigDecimal.ZERO;
-
-    /** 应付金额 = 单价 × 天数 - 优惠金额，保留2位小数 */
+    /** 应付金额 */
     @Column(name = "payable_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal payableAmount;
 
-    /** 实付金额，默认0，保留2位小数 */
-    @Column(name = "actual_amount", nullable = false, precision = 10, scale = 2)
-    private BigDecimal actualAmount = BigDecimal.ZERO;
+    /** 实付金额 */
+    @Column(name = "actual_amount", precision = 10, scale = 2)
+    private BigDecimal actualAmount;
 
-    /** 缴费状态：0-未缴费/1-已缴费/2-欠费 */
+    /** 缴费状态：0-未缴费，1-已缴费，2-欠费 */
     @Column(name = "payment_status", nullable = false)
     private Integer paymentStatus;
 
     /** 缴费截止日期 */
     @Column(name = "payment_deadline", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime paymentDeadline;
 
-    /** 提醒次数，默认0次 */
-    @Column(name = "remind_times", nullable = false)
+    /** 关联优惠规则（可选） */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "discount_id")
+    private DiscountRule discountRule;
+
+    /** 提醒次数 */
+    @Column(name = "remind_times", columnDefinition = "int default 0")
     private Integer remindTimes = 0;
 
-    /** 最后提醒时间，可为空 */
+    /** 最后提醒时间 */
     @Column(name = "last_remind_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime lastRemindTime;
 
-    /**
-     * 关联账单创建人（多对一关系）
-     * 记录由谁创建的账单
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
+    /** 关联创建人（管理员） */
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "create_by", nullable = false)
     private User createBy;
 
     /** 账单创建时间 */
     @Column(name = "create_time", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
     /** 账单最后修改时间 */
     @Column(name = "update_time", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
     /**

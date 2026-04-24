@@ -74,7 +74,8 @@ public class SecurityConfig {
                         "/webjars/**",            // WebJars资源
                         "/doc.html",              // 接口文档
                         "/favicon.ico",           // 网站图标
-                        "/uploads/**"             // 静态资源访问
+                        "/uploads/**",            // 静态资源访问
+                        "/upload/**"              // 文件上传接口
                 ).permitAll()
                 // 需要认证的接口
                 .anyRequest().authenticated()

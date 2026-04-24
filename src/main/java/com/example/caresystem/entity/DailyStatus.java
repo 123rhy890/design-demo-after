@@ -76,6 +76,26 @@ public class DailyStatus {
     @Column(name = "abnormal_img", length = 255)
     private String abnormalImg;
 
+    /** 异常严重程度：low-轻微/medium-中等/high-严重 */
+    @Column(name = "severity", length = 20)
+    private String severity;
+
+    /** 异常发生时间 */
+    @Column(name = "occur_time")
+    private LocalDateTime occurTime;
+
+    /** 处理措施描述，使用TEXT类型存储，可为空 */
+    @Column(name = "treatment", columnDefinition = "TEXT")
+    private String treatment;
+
+    /** 处理状态：0-处理中/1-已处理 */
+    @Column(name = "status", nullable = false)
+    private Integer status = 0;
+
+    /** 是否通知家长：0-否/1-是 */
+    @Column(name = "is_notify", nullable = false)
+    private Integer isNotify = 0;
+
     /** 推送状态：0-未推送/1-已推送/2-推送失败 */
     // 用于家长通知功能
     @Column(name = "push_status", nullable = false)

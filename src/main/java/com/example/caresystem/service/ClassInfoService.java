@@ -98,6 +98,22 @@ public class ClassInfoService {
         return classInfoRepository.findAll();
     }
 
+    @Transactional
+    public ClassInfo publishDailyCode(Integer classId, String code) {
+        ClassInfo classInfo = getClassById(classId);
+        classInfo.setDailySignCode(code);
+        classInfo.setCodeUpdateDate(LocalDate.now());
+        return classInfoRepository.save(classInfo);
+    }
+
+    public String getDailyCode(Integer classId) {
+        ClassInfo classInfo = getClassById(classId);
+        if (classInfo.getCodeUpdateDate() != null && classInfo.getCodeUpdateDate().equals(LocalDate.now())) {
+            return classInfo.getDailySignCode();
+        }
+        return null;
+    }
+
     public List<ClassInfo> getNormalClasses() {
         return classInfoRepository.findNormalClasses();
     }

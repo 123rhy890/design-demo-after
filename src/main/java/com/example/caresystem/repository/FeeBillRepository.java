@@ -186,15 +186,61 @@ public interface FeeBillRepository extends JpaRepository<FeeBill, Integer>, JpaS
      * @return 账单分页数据
      */
     @Query("SELECT f FROM FeeBill f WHERE f.parent.userId = :parentId ORDER BY f.billMonth DESC")
-    Page<FeeBill> findByParentId(@Param("parentId") Integer parentId, Pageable pageable);
+    Page<FeeBill> findByParentIdPage(@Param("parentId") Integer parentId, Pageable pageable);
 
     /**
      * 查找最近6个月的账单数据
      * @param childId 儿童ID
-     * @param months 月数
+     * @param limit 条数
      * @return 账单列表
      */
     @Query(value = "SELECT * FROM t_fee_bill WHERE child_id = :childId ORDER BY bill_month DESC LIMIT :limit", nativeQuery = true)
     List<FeeBill> findRecentBillsByChildId(@Param("childId") Integer childId,
                                            @Param("limit") Integer limit);
+
+    /**
+     * 分页条件查询账单（管理员端）
+     */
+    @Query("SELECT f FROM FeeBill f WHERE " +
+           "(:childName IS NULL OR f.child.childName LIKE %:childName%) AND " +
+           "(:paymentStatus IS NULL OR f.paymentStatus = :paymentStatus) AND " +
+           "(:billMonth IS NULL OR f.billMonth = :billMonth) " +
+           "ORDER BY f.createTime DESC")
+    Page<FeeBill> findByConditions(@Param("childName") String childName,
+                                   @Param("paymentStatus") Integer paymentStatus,
+                                   @Param("billMonth") String billMonth,
+                                   Pageable pageable);
+
+    /**
+     * 统计指定月份应收总额
+     */
+    @Query("SELECT COALESCE(SUM(f.payableAmount), 0) FROM FeeBill f WHERE f.billMonth = :billMonth")
+    BigDecimal sumPayableByMonth(@Param("billMonth") String billMonth);
+
+    /**
+     * 统计指定月份已收总额
+     */
+    @Query("SELECT COALESCE(SUM(f.actualAmount), 0) FROM FeeBill f WHERE f.billMonth = :billMonth AND f.paymentStatus = 1")
+    BigDecimal sumActualByMonth(@Param("billMonth") String billMonth);
+
+    /**
+     * 统计指定月份欠费人数（未缴费、欠费、审核中均计入待处理）
+     */
+    @Query("SELECT COUNT(f) FROM FeeBill f WHERE f.billMonth = :billMonth AND f.paymentStatus IN (0, 2, 4)")
+    Long countUnpaidByMonth(@Param("billMonth") String billMonth);
+
+    /**
+     * 按月份统计已收金额（用于图表）
+     */
+    @Query("SELECT f.billMonth, COALESCE(SUM(f.payableAmount), 0), COALESCE(SUM(f.actualAmount), 0) " +
+           "FROM FeeBill f WHERE f.billMonth IN :months GROUP BY f.billMonth ORDER BY f.billMonth")
+    List<Object[]> sumAmountGroupByMonth(@Param("months") List<String> months);
+
+    /**
+     * 更新账单提醒信息
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE FeeBill f SET f.remindTimes = f.remindTimes + 1, f.lastRemindTime = :now, f.updateTime = :now WHERE f.billId = :billId")
+    int incrementRemindTimes(@Param("billId") Integer billId, @Param("now") LocalDateTime now);
 }

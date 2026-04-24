@@ -95,4 +95,16 @@ public class ClassInfoController {
         List<ClassInfo> classes = classInfoService.searchClasses(keyword);
         return Result.success(classes);
     }
+
+    @PutMapping("/code/{id}")
+    public Result<ClassInfo> publishCode(@PathVariable Integer id, @RequestParam String code) {
+        ClassInfo classInfo = classInfoService.publishDailyCode(id, code);
+        return Result.success(classInfo);
+    }
+
+    @GetMapping("/code/{id}")
+    public Result<String> getDailyCode(@PathVariable Integer id) {
+        String code = classInfoService.getDailyCode(id);
+        return Result.success(code);
+    }
 }

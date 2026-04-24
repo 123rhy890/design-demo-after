@@ -54,6 +54,11 @@ public class VoucherService {
         voucher.setUploadTime(LocalDateTime.now());
         voucher.setAuditStatus(0);
 
+        // 更新账单状态为“审核中”
+        feeBill.setPaymentStatus(4); // 4-审核中
+        feeBill.setUpdateTime(LocalDateTime.now());
+        feeBillRepository.save(feeBill);
+
         return voucherRepository.save(voucher);
     }
 
@@ -96,7 +101,24 @@ public class VoucherService {
             voucher.setAuditRemark(auditRemark);
         }
 
-        return voucherRepository.save(voucher);
+        Voucher savedVoucher = voucherRepository.save(voucher);
+
+        // 如果审核通过，同步更新账单状态
+        if (auditStatus == 1) {
+            FeeBill feeBill = voucher.getFeeBill();
+            feeBill.setPaymentStatus(1); // 已缴费
+            feeBill.setActualAmount(feeBill.getPayableAmount()); // 实付金额等于应付金额
+            feeBill.setUpdateTime(LocalDateTime.now());
+            feeBillRepository.save(feeBill);
+        } else if (auditStatus == 2) {
+            // 如果审核驳回，恢复账单状态为未缴费
+            FeeBill feeBill = voucher.getFeeBill();
+            feeBill.setPaymentStatus(0); // 未缴费
+            feeBill.setUpdateTime(LocalDateTime.now());
+            feeBillRepository.save(feeBill);
+        }
+
+        return savedVoucher;
     }
 
     @Transactional

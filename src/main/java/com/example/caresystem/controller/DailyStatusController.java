@@ -69,9 +69,24 @@ public class DailyStatusController {
     }
 
     @GetMapping("/abnormal")
-    public Result<List<DailyStatus>> getAbnormalRecords() {
-        List<DailyStatus> statuses = dailyStatusService.getAbnormalRecords();
+    public Result<List<DailyStatus>> getAbnormalRecords(@RequestParam(required = false) String type) {
+        List<DailyStatus> statuses;
+        if (type != null && !"all".equals(type)) {
+            statuses = dailyStatusService.getAbnormalRecordsByType(type);
+        } else {
+            statuses = dailyStatusService.getAbnormalRecords();
+        }
         return Result.success(statuses);
+    }
+
+    @GetMapping("/abnormal/stats")
+    public Result<java.util.Map<String, Long>> getMonthlyAbnormalStats() {
+        return Result.success(dailyStatusService.getMonthlyAbnormalStats());
+    }
+
+    @PutMapping("/abnormal/handled/{id}")
+    public Result<DailyStatus> markAbnormalAsHandled(@PathVariable Integer id) {
+        return Result.success(dailyStatusService.markAbnormalAsHandled(id));
     }
 
     @PutMapping("/update/{id}")

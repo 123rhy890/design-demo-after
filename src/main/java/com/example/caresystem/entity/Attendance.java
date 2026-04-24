@@ -1,5 +1,6 @@
 package com.example.caresystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
@@ -40,9 +41,11 @@ public class Attendance {
     private String checkoutCode;
 
     @Column(name = "checkin_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime checkinTime;
 
     @Column(name = "checkout_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime checkoutTime;
 
     @Column(name = "pick_person", nullable = false, length = 50)
@@ -61,9 +64,11 @@ public class Attendance {
     private String remark;
 
     @Column(name = "create_time", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
     @Column(name = "update_time", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
     @PrePersist

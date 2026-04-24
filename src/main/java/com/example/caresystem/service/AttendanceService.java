@@ -1,9 +1,6 @@
 package com.example.caresystem.service;
 
-import com.example.caresystem.entity.Attendance;
-import com.example.caresystem.entity.Child;
-import com.example.caresystem.entity.Reservation;
-import com.example.caresystem.entity.User;
+import com.example.caresystem.entity.*;
 import com.example.caresystem.enums.BusinessEnums;
 import com.example.caresystem.enums.UserEnums;
 import com.example.caresystem.repository.AttendanceRepository;
@@ -18,6 +15,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -153,7 +151,7 @@ public class AttendanceService {
         LocalDateTime endOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
         
         Attendance attendance = attendanceRepository.findByChildId(childId).stream()
-                .filter(a -> a.getCheckinTime() != null && a.getCheckinTime().isAfter(startOfDay) && a.getCheckinTime().isBefore(todayEnd(endOfDay)))
+                .filter(a -> a.getCheckinTime() != null && a.getCheckinTime().isAfter(startOfDay) && a.getCheckinTime().isBefore(endOfDay))
                 .findFirst().orElse(null);
 
         if (attendance != null) {
@@ -177,10 +175,6 @@ public class AttendanceService {
         attendance.setRemark(remark);
 
         return attendanceRepository.save(attendance);
-    }
-
-    private LocalDateTime todayEnd(LocalDateTime end) {
-        return end;
     }
 
     @Transactional
@@ -249,7 +243,70 @@ public class AttendanceService {
         return attendanceRepository.findByCheckinTimeBetween(startOfDay, endOfDay);
     }
 
+    @Transactional
+    public Attendance manualCheckin(Integer reserveId, String signCode) {
+        Reservation reservation = reservationRepository.findById(reserveId)
+                .orElseThrow(() -> new RuntimeException("预约记录不存在"));
+
+        if (!"1".equals(reservation.getReserveStatus())) {
+            throw new RuntimeException("该预约记录尚未审核通过，无法签到");
+        }
+
+        if (!reservation.getReserveDate().equals(LocalDate.now())) {
+            throw new RuntimeException("只能在预约当天进行签到");
+        }
+
+        Child child = reservation.getChild();
+        if (child.getClassInfo() == null) {
+            throw new RuntimeException("儿童未分班，无法进行手动签到，请联系老师");
+        }
+
+        ClassInfo classInfo = child.getClassInfo();
+        if (classInfo.getDailySignCode() == null || !classInfo.getDailySignCode().equals(signCode) ||
+                classInfo.getCodeUpdateDate() == null || !classInfo.getCodeUpdateDate().equals(LocalDate.now())) {
+            throw new RuntimeException("签到码错误或老师尚未更新今日签到码");
+        }
+
+        // 检查今日是否已签到
+        LocalDateTime startOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+        LocalDateTime endOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        List<Attendance> todayAttendances = attendanceRepository.findByChildAndCheckinTimeBetween(child, startOfDay, endOfDay);
+        if (!todayAttendances.isEmpty()) {
+            throw new RuntimeException("该儿童今日已签到");
+        }
+
+        // 创建考勤记录
+        Attendance attendance = new Attendance();
+        attendance.setChild(child);
+        attendance.setTeacher(classInfo.getTeacher());
+        attendance.setReservation(reservation);
+        attendance.setCheckinTime(LocalDateTime.now());
+        attendance.setCheckinCode(signCode);
+        attendance.setCheckoutCode(generateCode());
+        attendance.setPickPerson("家长(手动签到)");
+        attendance.setPickPhone(child.getEmergencyPhone());
+        attendance.setAttendStatus(BusinessEnums.AttendanceStatus.NORMAL.getCode());
+        attendance.setRemark("家长端手动签到");
+
+        return attendanceRepository.save(attendance);
+    }
+
     private String generateCode() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+    }
+
+    /**
+     * 获取指定儿童在指定月份的所有考勤日期
+     * @param childId 儿童ID
+     * @param yearMonth 格式为 "yyyy-MM" 的月份字符串
+     * @return 该月份的考勤日期列表
+     */
+    public List<LocalDate> getCheckinDatesByChildAndMonth(Integer childId, String yearMonth) {
+        YearMonth ym = YearMonth.parse(yearMonth);
+        LocalDateTime startOfMonth = ym.atDay(1).atStartOfDay();
+        LocalDateTime endOfMonth = ym.atEndOfMonth().atTime(LocalTime.MAX);
+
+        List<java.sql.Date> dates = attendanceRepository.findCheckinDatesByChildAndMonth(childId, startOfMonth, endOfMonth);
+        return dates.stream().map(java.sql.Date::toLocalDate).collect(Collectors.toList());
     }
 }

@@ -31,5 +31,6 @@ jwt:
 
 # 文件上传配置
 file:
-  upload-path: f:/graduation-design/work/item/uploads # 绝对路径，根据实际环境修改
+  # 使用 System.getProperty("user.dir") 对应的相对路径，更稳健
+  upload-path: uploads
   access-path: /uploads # 访问路径

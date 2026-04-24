@@ -92,11 +92,46 @@ public interface DailyStatusRepository extends JpaRepository<DailyStatus, Intege
                                                   @Param("endDate") LocalDate endDate);
 
     /**
-     * 查找今日日常记录
-     * @return 今日日常记录列表
+     * 查找所有异常记录（abnormalType不为空）
+     * @return 异常记录列表
      */
-    @Query("SELECT d FROM DailyStatus d WHERE d.recordDate = CURRENT_DATE")
-    List<DailyStatus> findTodayDailyStatus();
+    @Query("SELECT d FROM DailyStatus d WHERE d.abnormalType IS NOT NULL AND d.abnormalType <> ''")
+    List<DailyStatus> findAllAbnormalRecords();
+
+    /**
+     * 根据类型查找异常记录
+     * @param abnormalType 异常类型
+     * @return 异常记录列表
+     */
+    List<DailyStatus> findByAbnormalType(String abnormalType);
+
+    /**
+     * 统计本月异常总数
+     * @param startDate 本月开始日期
+     * @param endDate 本月结束日期
+     * @return 异常总数
+     */
+    @Query("SELECT COUNT(d) FROM DailyStatus d WHERE d.recordDate BETWEEN :startDate AND :endDate AND d.abnormalType IS NOT NULL AND d.abnormalType <> ''")
+    long countMonthlyAbnormal(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    /**
+     * 统计本月特定类型的异常数
+     * @param abnormalType 异常类型
+     * @param startDate 本月开始日期
+     * @param endDate 本月结束日期
+     * @return 异常数
+     */
+    @Query("SELECT COUNT(d) FROM DailyStatus d WHERE d.abnormalType = :abnormalType AND d.recordDate BETWEEN :startDate AND :endDate")
+    long countMonthlyAbnormalByType(@Param("abnormalType") String abnormalType, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    /**
+     * 统计本月已处理的异常数
+     * @param startDate 本月开始日期
+     * @param endDate 本月结束日期
+     * @return 已处理异常数
+     */
+    @Query("SELECT COUNT(d) FROM DailyStatus d WHERE d.status = 1 AND d.recordDate BETWEEN :startDate AND :endDate AND d.abnormalType IS NOT NULL AND d.abnormalType <> ''")
+    long countMonthlyHandledAbnormal(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     /**
      * 查找有异常记录的日常记录
